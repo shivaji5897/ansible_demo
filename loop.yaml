@@ -1,0 +1,31 @@
+- hosts: all
+  become_user: root
+  become_method: sudo
+  become: yes
+
+  tasks:
+    - name: install packages on ubuntu
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      when: ansible_os_family=="Debian"
+      loop:
+         - wget
+         - git
+         - zip
+         - unzip
+         - ntp
+
+    - name: install packages on redhat
+      yum:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      when: ansible_os_family=="RedHat"
+      loop:
+         - wget
+         - git
+         - zip
+         - unzip
+         - chrony

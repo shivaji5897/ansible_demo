@@ -1,0 +1,36 @@
+- hosts: webserver
+  remote_user: ubuntu
+  become_user: root
+  become_method: sudo
+  become: yes
+
+  vars:
+     package_name: apache2
+     service_name: apache2
+     index_file: index.html
+     dest_path: /var/www/html
+
+  tasks:
+    - name: install "{{package_name}}" on remote server
+      apt:
+        name: "{{package_name}}"
+        state: latest
+        update_cache: yes
+
+    - name: make sure "{{service_name}}" is running
+      service:
+            name: "{{service_name}}"
+            state: started
+            enabled: true
+
+    - name: copy "{{index_file}}" from control server to remote server
+      copy:
+         src: "/etc/ansible/files/{{index_file}}"
+         dest: "{{dest_path}}/{{index_file}}"
+      notify: restart apache2
+
+  handlers:
+    - name: restart apache2
+      service:
+            name: "{{service_name}}"
+            state: restarted

@@ -1,0 +1,66 @@
+- hosts: all
+  become_user: root
+  become_method: sudo
+  become: yes
+
+  vars:
+     package_name_debian: apache2
+     service_name_debian: apache2
+     package_name_redhat: httpd
+     service_name_redhat: httpd
+     index_file: index.html
+     dest_path: /var/www/html
+
+  tasks:
+    - name: install "{{package_name_debian}}" on remote server
+      apt:
+        name: "{{package_name_debian}}"
+        state: latest
+        update_cache: yes
+      when: ansible_os_family=="Debian"
+
+    - name: make sure "{{service_name_debian}}" is running
+      service:
+            name: "{{service_name_debian}}"
+            state: started
+            enabled: true
+      when: ansible_os_family=="Debian"
+
+    - name: copy "{{index_file}}" from control server to remote server
+      copy:
+         src: "/etc/ansible/files/{{index_file}}"
+         dest: "{{dest_path}}/{{index_file}}"
+      notify: restart apache2
+      when: ansible_os_family=="Debian"
+
+    - name: install "{{package_name_redhat}}" on remote server
+      yum:
+        name: "{{package_name_redhat}}"
+        state: latest
+        update_cache: yes
+      when: ansible_os_family=="RedHat"
+
+    - name: make sure "{{service_name_redhat}}" is running
+      service:
+            name: "{{service_name_redhat}}"
+            state: started
+            enabled: true
+      when: ansible_os_family=="RedHat"
+
+    - name: copy "{{index_file}}" from control server to remote server
+      copy:
+         src: "/etc/ansible/files/{{index_file}}"
+         dest: "{{dest_path}}/{{index_file}}"
+      notify: restart httpd
+      when: ansible_os_family=="RedHat"
+
+  handlers:
+    - name: restart httpd
+      service:
+            name: httpd
+            state: restarted
+
+    - name: restart apache2
+      service:
+            name: apache2
+            state: restarted
